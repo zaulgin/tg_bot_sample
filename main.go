@@ -4,21 +4,31 @@ import (
 	"flag"
 	"log"
 
-	"github.com/zaulgin/tg_bot_sample/clients/telegram"
+	tgClient "github.com/zaulgin/tg_bot_sample/clients/telegram"
+	event_consumer "github.com/zaulgin/tg_bot_sample/consumer/event-consumer"
+	"github.com/zaulgin/tg_bot_sample/events/telegram"
+	"github.com/zaulgin/tg_bot_sample/storage/files"
 )
 
 const (
-	tgBotHost = "api.telegram.org"
+	tgBotHost   = "api.telegram.org"
+	storagePath = "storage"
+	batchSize   = 100
 )
 
 func main() {
-	tgClient := telegram.New(tgBotHost, mustToken())
+	eventsProccesor := telegram.New(
+		tgClient.New(tgBotHost, mustToken()),
+		files.New(storagePath),
+	)
 
-	// fetcher = fetcher.New()
+	log.Print("service started")
 
-	// processor = processor.New()
+	consumer := event_consumer.New(eventsProccesor, eventsProccesor, batchSize)
 
-	// consumer.Start(fetcher, processor)
+	if err := consumer.Start(); err != nil {
+		log.Fatal("service is stopped", err)
+	}
 }
 
 func mustToken() string {
